@@ -1,0 +1,48 @@
+# Unity generated
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# Visual Studio / Rider / VSCode / IDE
+.vs/
+.idea/
+.vscode/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Unity build outputs
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# Crashlytics generated
+crashlytics-build.properties
+
+# Asset Store
+Assets/AssetStoreTools*
+
+# Auto-generated meta files for ignored dirs are fine
