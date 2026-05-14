@@ -30,5 +30,16 @@ namespace UMMonopoly.Systems
             LastWasDoubles = DiceCount == 2 && LastRoll[0] == LastRoll[1];
             return total;
         }
+
+        /// <summary>
+        /// Used when physical dice provide the result — overrides the random roll
+        /// so the game logic uses the real physical outcome.
+        /// </summary>
+        public void OverrideResult(int die1, int die2)
+        {
+            LastRoll = new int[] { die1, die2 };
+            LastTotal = die1 + die2;
+            LastWasDoubles = die1 == die2;
+        }
     }
 }

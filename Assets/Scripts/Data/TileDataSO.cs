@@ -27,5 +27,11 @@ namespace UMMonopoly.Data
         [Header("Visual")]
         public Sprite icon;
         public Color tileColor = Color.white;
+
+        [Header("Landing Popup")]
+        [Tooltip("Photo shown when a player lands on this tile (e.g. actual photo of FSKTM building).")]
+        public Sprite locationPhoto;
+        [TextArea(1, 3)]
+        public string locationDescription;
     }
 }
