@@ -18,11 +18,13 @@ namespace UMMonopoly.Entities
 
                 case CardEffectType.MoveToTile:
                     player.TeleportTo(card.Amount, ctx.Config.boardSize, ctx.Config.salaryOnGo);
+                    EventBus.RaisePlayerMoved(player, player.BoardPosition);
                     ctx.Board.GetTile(player.BoardPosition).OnPlayerLanded(player, ctx);
                     break;
 
                 case CardEffectType.MoveSteps:
                     player.Move(card.Amount, ctx.Config.boardSize, awardSalary: true, ctx.Config.salaryOnGo);
+                    EventBus.RaisePlayerMoved(player, player.BoardPosition);
                     ctx.Board.GetTile(player.BoardPosition).OnPlayerLanded(player, ctx);
                     break;
 
@@ -30,6 +32,7 @@ namespace UMMonopoly.Entities
                     player.InJail = true;
                     player.JailTurnsRemaining = ctx.Config.maxJailTurns;
                     player.TeleportTo(ctx.Config.jailTilePosition, ctx.Config.boardSize, 0);
+                    EventBus.RaisePlayerMoved(player, player.BoardPosition);
                     EventBus.RaiseSentToJail(player);
                     break;
 
@@ -54,7 +57,7 @@ namespace UMMonopoly.Entities
                     break;
 
                 case CardEffectType.PayPerProperty:
-                    int total = player.OwnedProperties.Count * card.Amount;
+                    int total = player.OwnedAssetCount() * card.Amount;
                     ctx.Bank.CollectTax(player, total);
                     break;
             }

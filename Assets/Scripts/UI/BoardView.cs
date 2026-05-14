@@ -20,22 +20,33 @@ namespace UMMonopoly.UI
         private void OnEnable()
         {
             EventBus.OnPlayerMoved += HandleMoved;
+            EventBus.OnSentToJail += HandleSentToJail;
         }
 
         private void OnDisable()
         {
             EventBus.OnPlayerMoved -= HandleMoved;
+            EventBus.OnSentToJail -= HandleSentToJail;
         }
 
         public void SpawnTokens(List<Player> players)
         {
+            foreach (var token in _tokens.Values)
+            {
+                if (token != null) Destroy(token.gameObject);
+            }
+            _tokens.Clear();
+
             foreach (var p in players)
             {
                 var t = Instantiate(playerTokenPrefab, transform).transform;
                 if (p.Id < playerColors.Length)
                 {
-                    var sr = t.GetComponentInChildren<SpriteRenderer>();
-                    if (sr != null) sr.color = playerColors[p.Id];
+                    var spriteRenderer = t.GetComponentInChildren<SpriteRenderer>();
+                    if (spriteRenderer != null) spriteRenderer.color = playerColors[p.Id];
+
+                    var meshRenderer = t.GetComponentInChildren<MeshRenderer>();
+                    if (meshRenderer != null) meshRenderer.sharedMaterial = CreateTokenMaterial(playerColors[p.Id]);
                 }
                 _tokens[p.Id] = t;
                 MoveTokenTo(t, p.BoardPosition);
@@ -48,6 +59,11 @@ namespace UMMonopoly.UI
             MoveTokenTo(t, pos);
         }
 
+        private void HandleSentToJail(Player p)
+        {
+            HandleMoved(p, p.BoardPosition);
+        }
+
         private void MoveTokenTo(Transform token, int pos)
         {
             if (pos < 0 || pos >= tileAnchors.Length || tileAnchors[pos] == null) return;
@@ -58,6 +74,14 @@ namespace UMMonopoly.UI
                 if (kv.Value == token) { idOffset = kv.Key; break; }
             }
             token.position = tileAnchors[pos].position + new Vector3(idOffset * 0.15f, idOffset * 0.15f, 0f);
+        }
+
+        private static Material CreateTokenMaterial(Color color)
+        {
+            var shader = Shader.Find("Sprites/Default") ?? Shader.Find("Unlit/Color");
+            var material = new Material(shader);
+            material.color = color;
+            return material;
         }
     }
 }

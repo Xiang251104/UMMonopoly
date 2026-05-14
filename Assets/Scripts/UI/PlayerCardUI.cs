@@ -29,7 +29,7 @@ namespace UMMonopoly.UI
             if (_player == null) return;
             if (nameLabel != null) nameLabel.text = _player.Name;
             if (moneyLabel != null) moneyLabel.text = $"RM {_player.Money}";
-            if (propertyCountLabel != null) propertyCountLabel.text = $"{_player.OwnedProperties.Count} props";
+            if (propertyCountLabel != null) propertyCountLabel.text = $"{_player.OwnedAssetCount()} assets";
         }
 
         public void MarkBankrupt()

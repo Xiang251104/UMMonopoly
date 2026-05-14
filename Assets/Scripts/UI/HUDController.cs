@@ -17,6 +17,8 @@ namespace UMMonopoly.UI
         public Button rollButton;
         public Button endTurnButton;
         public Button buyButton;
+        public Button saveButton;
+        public Button loadButton;
 
         private readonly Dictionary<int, PlayerCardUI> _cards = new Dictionary<int, PlayerCardUI>();
 
@@ -101,6 +103,18 @@ namespace UMMonopoly.UI
             GameManager.Instance.TryBuyCurrentTile();
             RefreshBuyButton();
             foreach (var c in _cards.Values) c.Refresh();
+        }
+
+        public void OnSavePressed()
+        {
+            GameManager.Instance.SaveCurrentGame();
+        }
+
+        public void OnLoadPressed()
+        {
+            if (!GameManager.Instance.LoadSavedGame()) return;
+            BuildPlayerCards(GameManager.Instance.Players);
+            RefreshBuyButton();
         }
     }
 }

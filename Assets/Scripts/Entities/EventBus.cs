@@ -12,6 +12,7 @@ namespace UMMonopoly.Entities
         public static event Action<Player, PropertyTile> OnPropertyUpgraded;
         public static event Action<Player, Player, int> OnRentPaid;       // from, to, amount
         public static event Action<Player> OnSentToJail;
+        public static event Action<Player, Tile> OnTileResolved;
         public static event Action<Player> OnPlayerBankrupt;
         public static event Action<Player> OnGameWon;
         public static event Action<int> OnTurnStarted;                    // player index
@@ -25,6 +26,7 @@ namespace UMMonopoly.Entities
         public static void RaisePropertyUpgraded(Player p, PropertyTile t) => OnPropertyUpgraded?.Invoke(p, t);
         public static void RaiseRentPaid(Player from, Player to, int amount) => OnRentPaid?.Invoke(from, to, amount);
         public static void RaiseSentToJail(Player p) => OnSentToJail?.Invoke(p);
+        public static void RaiseTileResolved(Player p, Tile t) => OnTileResolved?.Invoke(p, t);
         public static void RaisePlayerBankrupt(Player p) => OnPlayerBankrupt?.Invoke(p);
         public static void RaiseGameWon(Player p) => OnGameWon?.Invoke(p);
         public static void RaiseTurnStarted(int idx) => OnTurnStarted?.Invoke(idx);

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13b9b45c498144369ca8afdf235a95c6, type: 3}
+  m_Name: Tile03_KK2
+  m_EditorClassIdentifier: 
+  position: 3
+  tileName: Kolej Kediaman 2 (KK2)
+  type: 1
+  purchasePrice: 60
+  colorGroup: 1
+  rentTable: 04000000140000003c0000008c00000018010000
+  upgradeCost: 50
+  taxAmount: 0
+  deckType: 0
+  icon: {fileID: 0}
+  tileColor: {r: 1, g: 1, b: 1, a: 1}

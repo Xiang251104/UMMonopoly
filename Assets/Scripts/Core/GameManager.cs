@@ -53,12 +53,7 @@ namespace UMMonopoly.Core
                 Players.Add(new Player(i, playerNames[i], config.startingMoney));
             }
 
-            Board = new Board(config.tiles);
-            Bank = new Bank();
-            AkademikDeck = new CardDeck(CardDeckType.Akademik, config.akademikDeck);
-            KampusDeck = new CardDeck(CardDeckType.Kampus, config.kampusDeck);
-            Dice = new DiceRoller(config.diceCount, config.diceSides);
-            Context = new GameContext(Board, Bank, AkademikDeck, KampusDeck, config, Players);
+            BuildRuntimeSystems();
 
             CurrentPlayerIndex = 0;
             TurnNumber = 1;
@@ -75,6 +70,16 @@ namespace UMMonopoly.Core
             Bank.LastDiceTotal = total;
             EventBus.RaiseDiceRolled(CurrentPlayer, total);
 
+            if (CurrentPlayer.InJail)
+            {
+                HandleJailRoll();
+                if (CurrentState == GameState.RollPhase)
+                {
+                    SetState(GameState.DecisionPhase);
+                }
+                return total;
+            }
+
             if (Dice.LastWasDoubles)
             {
                 DoublesInARow++;
@@ -82,18 +87,13 @@ namespace UMMonopoly.Core
                 {
                     SendCurrentPlayerToJail();
                     DoublesInARow = 0;
+                    SetState(GameState.DecisionPhase);
                     return total;
                 }
             }
             else
             {
                 DoublesInARow = 0;
-            }
-
-            if (CurrentPlayer.InJail)
-            {
-                HandleJailRoll();
-                return total;
             }
 
             CurrentPlayer.Move(total, config.boardSize, awardSalary: true, config.salaryOnGo);
@@ -107,7 +107,8 @@ namespace UMMonopoly.Core
             SetState(GameState.ResolveTilePhase);
             var tile = Board.GetTile(CurrentPlayer.BoardPosition);
             tile.OnPlayerLanded(CurrentPlayer, Context);
-            CheckBankruptcy(CurrentPlayer);
+            EventBus.RaiseTileResolved(CurrentPlayer, tile);
+            CheckAllBankruptcies();
             SetState(GameState.DecisionPhase);
         }
 
@@ -121,6 +122,51 @@ namespace UMMonopoly.Core
         }
 
         public bool TryUpgrade(PropertyTile p) => Bank.UpgradeProperty(p, Board);
+
+        public void SaveCurrentGame()
+        {
+            if (Players.Count == 0 || Board == null) return;
+            SaveSystem.Save(SaveSystem.Snapshot(Players, CurrentPlayerIndex, TurnNumber, Board));
+        }
+
+        public bool LoadSavedGame()
+        {
+            var data = SaveSystem.Load();
+            if (data == null || config == null) return false;
+
+            Players.Clear();
+            foreach (var ps in data.players)
+            {
+                var player = new Player(ps.id, ps.name, config.startingMoney);
+                player.RestoreState(
+                    ps.name,
+                    ps.money,
+                    ps.position,
+                    ps.inJail,
+                    ps.jailTurnsRemaining,
+                    ps.isBankrupt,
+                    ps.getOutOfJailCards,
+                    config.boardSize);
+                Players.Add(player);
+            }
+
+            BuildRuntimeSystems();
+            RestoreOwnership(data);
+
+            CurrentPlayerIndex = Mathf.Clamp(data.currentPlayerIndex, 0, Mathf.Max(0, Players.Count - 1));
+            TurnNumber = Mathf.Max(1, data.turnNumber);
+            DoublesInARow = 0;
+            SetState(GameState.TurnStart);
+
+            foreach (var player in Players)
+            {
+                EventBus.RaiseMoneyChanged(player, 0);
+                EventBus.RaisePlayerMoved(player, player.BoardPosition);
+                if (player.IsBankrupt) EventBus.RaisePlayerBankrupt(player);
+            }
+            EventBus.RaiseTurnStarted(CurrentPlayerIndex);
+            return true;
+        }
 
         public void EndTurn()
         {
@@ -196,16 +242,83 @@ namespace UMMonopoly.Core
             CurrentPlayer.InJail = true;
             CurrentPlayer.JailTurnsRemaining = config.maxJailTurns;
             CurrentPlayer.TeleportTo(config.jailTilePosition, config.boardSize, 0);
+            EventBus.RaisePlayerMoved(CurrentPlayer, CurrentPlayer.BoardPosition);
             EventBus.RaiseSentToJail(CurrentPlayer);
         }
 
         private void CheckBankruptcy(Player p)
         {
             if (p.IsBankrupt) return;
-            if (p.Money < 0 || (p.Money == 0 && p.LiquidationValue() <= 0))
+            if (p.HasUnpaidDebt || p.Money < 0 || (p.Money == 0 && p.LiquidationValue() <= 0))
             {
                 p.DeclareBankrupt();
                 EventBus.RaisePlayerBankrupt(p);
+            }
+        }
+
+        private void CheckAllBankruptcies()
+        {
+            foreach (var player in Players)
+            {
+                CheckBankruptcy(player);
+            }
+        }
+
+        private void BuildRuntimeSystems()
+        {
+            Board = new Board(config.tiles);
+            Bank = new Bank();
+            AkademikDeck = new CardDeck(CardDeckType.Akademik, config.akademikDeck);
+            KampusDeck = new CardDeck(CardDeckType.Kampus, config.kampusDeck);
+            Dice = new DiceRoller(config.diceCount, config.diceSides);
+            Context = new GameContext(Board, Bank, AkademikDeck, KampusDeck, config, Players);
+        }
+
+        private void RestoreOwnership(GameSaveData data)
+        {
+            var byId = new Dictionary<int, Player>();
+            foreach (var player in Players)
+            {
+                byId[player.Id] = player;
+            }
+
+            foreach (var ps in data.players)
+            {
+                if (!byId.TryGetValue(ps.id, out var owner) || owner.IsBankrupt) continue;
+
+                if (ps.ownedPropertyPositions != null)
+                {
+                    for (int i = 0; i < ps.ownedPropertyPositions.Count; i++)
+                    {
+                        var tile = Board.GetTile(ps.ownedPropertyPositions[i]) as PropertyTile;
+                        if (tile == null) continue;
+                        tile.Owner = owner;
+                        tile.UpgradeLevel = ps.propertyUpgradeLevels != null && i < ps.propertyUpgradeLevels.Count ? ps.propertyUpgradeLevels[i] : 0;
+                        owner.OwnedProperties.Add(tile);
+                    }
+                }
+
+                if (ps.ownedStationPositions != null)
+                {
+                    foreach (int position in ps.ownedStationPositions)
+                    {
+                        var station = Board.GetTile(position) as StationTile;
+                        if (station == null) continue;
+                        station.Owner = owner;
+                        owner.OwnedStations.Add(station);
+                    }
+                }
+
+                if (ps.ownedUtilityPositions != null)
+                {
+                    foreach (int position in ps.ownedUtilityPositions)
+                    {
+                        var utility = Board.GetTile(position) as UtilityTile;
+                        if (utility == null) continue;
+                        utility.Owner = owner;
+                        owner.OwnedUtilities.Add(utility);
+                    }
+                }
             }
         }
 

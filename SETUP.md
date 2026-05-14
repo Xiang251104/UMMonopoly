@@ -38,6 +38,20 @@ In Unity, open **Window → Package Manager** and install:
 
 ## 4. Create Scenes
 
+### Fast path: generated starter setup
+
+After Unity imports the project and TextMeshPro essentials, use the editor helper:
+
+1. In the Unity top menu, click **UM Monopoly -> Build Starter Project**
+2. Confirm the dialog
+3. Unity will create starter scenes, placeholder prefabs, 40 board anchors, basic UI wiring, and Build Settings entries
+4. Open `Assets/Scenes/MainMenu.unity`
+5. Press Play
+
+You can also run **UM Monopoly -> Validate Data Assets** to check that `MainGameConfig` has 40 ordered tiles and both card decks.
+
+### Manual fallback
+
 In `Assets/Scenes/`, create three scenes:
 
 | Scene | Purpose |

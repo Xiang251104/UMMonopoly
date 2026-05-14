@@ -18,6 +18,8 @@ namespace UMMonopoly.Systems
         public int getOutOfJailCards;
         public List<int> ownedPropertyPositions = new List<int>();
         public List<int> propertyUpgradeLevels = new List<int>();
+        public List<int> ownedStationPositions = new List<int>();
+        public List<int> ownedUtilityPositions = new List<int>();
     }
 
     [System.Serializable]
@@ -79,6 +81,14 @@ namespace UMMonopoly.Systems
                 {
                     ps.ownedPropertyPositions.Add(prop.Position);
                     ps.propertyUpgradeLevels.Add(prop.UpgradeLevel);
+                }
+                foreach (var station in p.OwnedStations)
+                {
+                    ps.ownedStationPositions.Add(station.Position);
+                }
+                foreach (var utility in p.OwnedUtilities)
+                {
+                    ps.ownedUtilityPositions.Add(utility.Position);
                 }
                 data.players.Add(ps);
             }

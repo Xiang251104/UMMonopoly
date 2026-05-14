@@ -22,6 +22,7 @@ namespace UMMonopoly.Systems
             if (station.Owner != null) return false;
             if (!buyer.TryPay(station.Data.purchasePrice)) return false;
             station.Owner = buyer;
+            buyer.OwnedStations.Add(station);
             EventBus.RaiseMoneyChanged(buyer, -station.Data.purchasePrice);
             return true;
         }
@@ -31,6 +32,7 @@ namespace UMMonopoly.Systems
             if (util.Owner != null) return false;
             if (!buyer.TryPay(util.Data.purchasePrice)) return false;
             util.Owner = buyer;
+            buyer.OwnedUtilities.Add(util);
             EventBus.RaiseMoneyChanged(buyer, -util.Data.purchasePrice);
             return true;
         }
@@ -53,6 +55,7 @@ namespace UMMonopoly.Systems
             {
                 paid = from.Money;          // pay what you can; bankruptcy handled by GameManager
                 from.TryPay(paid);
+                from.MarkUnpaidDebt();
             }
             to.Receive(paid);
             EventBus.RaiseMoneyChanged(from, -paid);
@@ -68,6 +71,7 @@ namespace UMMonopoly.Systems
             {
                 paid = from.Money;
                 from.TryPay(paid);
+                from.MarkUnpaidDebt();
             }
             EventBus.RaiseMoneyChanged(from, -paid);
         }
