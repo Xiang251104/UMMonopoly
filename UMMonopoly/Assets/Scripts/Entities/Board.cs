@@ -7,16 +7,23 @@ namespace UMMonopoly.Entities
     {
         public List<Tile> Tiles { get; }
 
+        // Indexed by TileDataSO.position — guarantees GetTile(n) is correct
+        // regardless of the order tiles appear in the GameConfigSO list.
+        private readonly Dictionary<int, Tile> _byPosition = new Dictionary<int, Tile>();
+
         public Board(List<TileDataSO> tileData)
         {
             Tiles = new List<Tile>(tileData.Count);
             foreach (var data in tileData)
             {
-                Tiles.Add(BuildTile(data));
+                var tile = BuildTile(data);
+                Tiles.Add(tile);
+                _byPosition[data.position] = tile;
             }
         }
 
-        public Tile GetTile(int position) => Tiles[position];
+        public Tile GetTile(int position) =>
+            _byPosition.TryGetValue(position, out var t) ? t : Tiles[position];
 
         public IEnumerable<PropertyTile> AllPropertiesInGroup(ColorGroup group)
         {

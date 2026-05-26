@@ -21,6 +21,8 @@ namespace UMMonopoly.UI
         public Color[] playerColors = { Color.red, Color.blue, Color.green, Color.yellow };
 
         [Header("Movement")]
+        [Tooltip("Y offset above anchor so tokens sit on top of tile cubes.")]
+        public float tokenHeightOffset = 0.35f;
         [Tooltip("How high the token bounces between tiles.")]
         public float hopHeight = 0.5f;
         [Tooltip("Time in seconds per tile hop.")]
@@ -30,6 +32,9 @@ namespace UMMonopoly.UI
         public TileLandingPopup landingPopup;
 
         public bool IsMoving { get; private set; }
+
+        public Transform GetPlayerToken(int playerId) =>
+            _tokens.TryGetValue(playerId, out var t) ? t : null;
 
         private readonly Dictionary<int, Transform> _tokens = new Dictionary<int, Transform>();
         private readonly Dictionary<int, int> _playerPositions = new Dictionary<int, int>();
@@ -44,7 +49,11 @@ namespace UMMonopoly.UI
                 var go = Instantiate(playerTokenPrefab, GetAnchorPos(0), Quaternion.identity, transform);
                 var r = go.GetComponentInChildren<Renderer>();
                 if (r != null && p.Id < playerColors.Length)
-                    r.material.color = playerColors[p.Id];
+                {
+                    var mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                    mat.SetColor("_BaseColor", playerColors[p.Id]);
+                    r.sharedMaterial = mat;
+                }
 
                 _tokens[p.Id] = go.transform;
                 _playerPositions[p.Id] = 0;
@@ -106,7 +115,7 @@ namespace UMMonopoly.UI
         {
             if (tileIndex < 0 || tileIndex >= tileAnchors.Length || tileAnchors[tileIndex] == null)
                 return Vector3.zero;
-            return tileAnchors[tileIndex].position;
+            return tileAnchors[tileIndex].position + Vector3.up * tokenHeightOffset;
         }
     }
 }

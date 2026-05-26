@@ -14,8 +14,8 @@ namespace UMMonopoly.Core
     public class TurnController : MonoBehaviour
     {
         [Header("References")]
-        public DicePhysics diceA;
-        public DicePhysics diceB;
+        public DiceAnimator diceA;
+        public DiceAnimator diceB;
         public BoardView boardView;
 
         [Header("Pacing")]
@@ -66,9 +66,17 @@ namespace UMMonopoly.Core
             gm.Dice.OverrideResult(resultA, resultB);
             int total = gm.RollAndMove();
 
-            // Wait for token to finish hopping
+            // Wait for token to finish hopping (5s timeout so game never locks up)
             if (boardView != null)
-                yield return new WaitUntil(() => !boardView.IsMoving);
+            {
+                float timeout = 5f;
+                float elapsed = 0f;
+                while (boardView.IsMoving && elapsed < timeout)
+                {
+                    elapsed += Time.deltaTime;
+                    yield return null;
+                }
+            }
 
             IsAnimating = false;
         }

@@ -28,7 +28,7 @@ namespace UMMonopoly.UI
         private void Show(Player p, Card c)
         {
             if (panelRoot != null) panelRoot.SetActive(true);
-            if (deckLabel != null) deckLabel.text = c.Data.deck.ToString() + " Card";
+            if (deckLabel != null) deckLabel.text = $"{p.Name} draws a {c.Data.deck} Card";
             if (descriptionLabel != null) descriptionLabel.text = c.Description;
         }
 
