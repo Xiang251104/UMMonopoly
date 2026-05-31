@@ -23,5 +23,5 @@ MonoBehaviour:
   deckType: 0
   icon: {fileID: 0}
   tileColor: {r: 1, g: 1, b: 1, a: 1}
-  locationPhoto: {fileID: 0}
+  locationPhoto: {fileID: 21300000, guid: b4633341ee41d8449841e95495e6f855, type: 3}
   locationDescription: 

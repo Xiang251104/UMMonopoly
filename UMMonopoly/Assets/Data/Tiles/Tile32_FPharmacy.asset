@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Tile32_FPharmacy
   m_EditorClassIdentifier: Assembly-CSharp::UMMonopoly.Data.TileDataSO
   position: 32
-  tileName: Fakulti Farmasi
+  tileName: Faculty of Pharmacy
   type: 1
   purchasePrice: 300
   colorGroup: 7
@@ -23,5 +23,5 @@ MonoBehaviour:
   deckType: 0
   icon: {fileID: 0}
   tileColor: {r: 1, g: 1, b: 1, a: 1}
-  locationPhoto: {fileID: 0}
+  locationPhoto: {fileID: 21300000, guid: 2fd832ad9ffcb0748bd87e30e6c48b65, type: 3}
   locationDescription: 

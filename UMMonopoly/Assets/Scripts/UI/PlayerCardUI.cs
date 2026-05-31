@@ -11,6 +11,8 @@ namespace UMMonopoly.UI
         public TMP_Text nameLabel;
         public TMP_Text moneyLabel;
         public TMP_Text propertyCountLabel;
+        [Tooltip("Shows 'Free Pass: N' when the player owns ≥1 Get-Out-of-Jail card. Hidden when count is 0.")]
+        public TMP_Text cardCountLabel;
         public Image colorTag;
         public GameObject bankruptOverlay;
         [Tooltip("A TMP_Text label that reads 'IN JAIL' — shown/hidden based on player jail status.")]
@@ -42,9 +44,19 @@ namespace UMMonopoly.UI
         public void Refresh()
         {
             if (_player == null) return;
-            if (nameLabel != null) nameLabel.text = _player.Name;
+            if (nameLabel  != null) nameLabel.text  = _player.Name;
             if (moneyLabel != null) moneyLabel.text = $"RM {_player.Money}";
-            if (propertyCountLabel != null) propertyCountLabel.text = $"{_player.OwnedProperties.Count} props";
+            if (propertyCountLabel != null)
+            {
+                int n = _player.OwnedProperties.Count;
+                propertyCountLabel.text = n == 1 ? "1 Property" : $"{n} Properties";
+            }
+            if (cardCountLabel != null)
+            {
+                int c = _player.GetOutOfJailCards;
+                cardCountLabel.gameObject.SetActive(c > 0);
+                cardCountLabel.text = $"Free Pass: {c}";
+            }
             if (jailLabel != null) jailLabel.gameObject.SetActive(_player.InJail);
         }
 
@@ -78,10 +90,10 @@ namespace UMMonopoly.UI
 
                 if (glowBorder != null)
                     glowBorder.color = new Color(GoldColor.r, GoldColor.g, GoldColor.b,
-                                                  Mathf.Lerp(0.0f, 0.80f, t));
+                                                  Mathf.Lerp(0.0f, 0.95f, t));
 
-                // Very subtle scale pulse (1.0 → 1.022)
-                transform.localScale = Vector3.one * Mathf.Lerp(1.000f, 1.022f, t);
+                // Subtle scale pulse (1.0 → 1.030)
+                transform.localScale = Vector3.one * Mathf.Lerp(1.000f, 1.030f, t);
 
                 yield return null;
             }

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Tile16_FPerniagaan
   m_EditorClassIdentifier: Assembly-CSharp::UMMonopoly.Data.TileDataSO
   position: 16
-  tileName: Fakulti Perniagaan
+  tileName: Faculty of Business
   type: 1
   purchasePrice: 180
   colorGroup: 4
@@ -23,5 +23,5 @@ MonoBehaviour:
   deckType: 0
   icon: {fileID: 0}
   tileColor: {r: 1, g: 1, b: 1, a: 1}
-  locationPhoto: {fileID: 0}
+  locationPhoto: {fileID: 21300000, guid: 7fa2d8ee4cd687f4ea7de0608611faad, type: 3}
   locationDescription: 

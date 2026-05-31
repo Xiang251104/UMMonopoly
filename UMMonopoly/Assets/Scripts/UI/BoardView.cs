@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UMMonopoly.Core;
+using UMMonopoly.Data;
 using UMMonopoly.Entities;
 
 namespace UMMonopoly.UI
@@ -31,28 +33,139 @@ namespace UMMonopoly.UI
         [Header("Landing Popup")]
         public TileLandingPopup landingPopup;
 
+        [Header("Token Highlight")]
+        [Tooltip("Constant emission strength for non-active player tokens.")]
+        public float inactiveEmission = 0.5f;
+        [Tooltip("Active player emission pulses between these two multipliers.")]
+        public float activeEmissionMin = 0.8f;
+        public float activeEmissionMax = 1.4f;
+        [Tooltip("Seconds for one full pulse cycle.")]
+        public float pulsePeriod = 1.5f;
+        [Header("Token Material (glossy plastic look)")]
+        [Range(0f, 1f)] public float tokenMetallic   = 0.2f;
+        [Range(0f, 1f)] public float tokenSmoothness = 0.7f;
+
         public bool IsMoving { get; private set; }
 
         public Transform GetPlayerToken(int playerId) =>
             _tokens.TryGetValue(playerId, out var t) ? t : null;
 
-        private readonly Dictionary<int, Transform> _tokens = new Dictionary<int, Transform>();
-        private readonly Dictionary<int, int> _playerPositions = new Dictionary<int, int>();
+        private readonly Dictionary<int, Transform>  _tokens = new Dictionary<int, Transform>();
+        private readonly Dictionary<int, int>        _playerPositions = new Dictionary<int, int>();
+        private readonly Dictionary<int, Material>   _mainMats = new Dictionary<int, Material>();
+        private readonly Dictionary<int, Material>   _haloMats = new Dictionary<int, Material>();
+        private readonly Dictionary<int, GameObject> _haloObjects = new Dictionary<int, GameObject>();
+        // Ownership markers keyed by tile position (0..39). Created lazily on first purchase.
+        private readonly Dictionary<int, GameObject> _ownerMarkers = new Dictionary<int, GameObject>();
+        private int _activePlayerId = -1;
 
-        private void OnEnable()  => EventBus.OnPlayerMoved += HandleMoved;
-        private void OnDisable() => EventBus.OnPlayerMoved -= HandleMoved;
+        const float HaloMinAlpha = 0.35f;
+        const float HaloMaxAlpha = 0.65f;
+
+        private void OnEnable()
+        {
+            EventBus.OnPlayerMoved    += HandleMoved;
+            EventBus.OnTurnStarted    += HandleTurnStarted;
+            EventBus.OnTilePurchased  += HandleTilePurchased;
+        }
+
+        private void OnDisable()
+        {
+            EventBus.OnPlayerMoved    -= HandleMoved;
+            EventBus.OnTurnStarted    -= HandleTurnStarted;
+            EventBus.OnTilePurchased  -= HandleTilePurchased;
+        }
+
+        private void Update()
+        {
+            // Pulse only the active player's emission + halo alpha.
+            if (_activePlayerId < 0) return;
+            if (_activePlayerId >= playerColors.Length) return;
+
+            float sin01 = (Mathf.Sin(Time.time * 2f * Mathf.PI / pulsePeriod) + 1f) * 0.5f;
+            Color baseColor = playerColors[_activePlayerId];
+
+            // Token emission
+            if (_mainMats.TryGetValue(_activePlayerId, out var mat) && mat != null)
+            {
+                float multiplier = Mathf.Lerp(activeEmissionMin, activeEmissionMax, sin01);
+                mat.SetColor("_EmissionColor", baseColor * multiplier);
+            }
+
+            // Halo alpha (only the active player has a visible halo)
+            if (_haloMats.TryGetValue(_activePlayerId, out var haloMat) && haloMat != null)
+            {
+                float a = Mathf.Lerp(HaloMinAlpha, HaloMaxAlpha, sin01);
+                haloMat.SetColor("_BaseColor", new Color(baseColor.r, baseColor.g, baseColor.b, a));
+            }
+        }
 
         public void SpawnTokens(List<Player> players)
         {
+            var litShader   = Shader.Find("Universal Render Pipeline/Lit");
+            var unlitShader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (litShader == null)   Debug.LogError("[BoardView] URP/Lit shader not found.");
+            if (unlitShader == null) Debug.LogError("[BoardView] URP/Unlit shader not found.");
+
             foreach (var p in players)
             {
                 var go = Instantiate(playerTokenPrefab, GetAnchorPos(0), Quaternion.identity, transform);
-                var r = go.GetComponentInChildren<Renderer>();
-                if (r != null && p.Id < playerColors.Length)
+                Color playerColor = p.Id < playerColors.Length ? playerColors[p.Id] : Color.white;
+
+                // Find the TokenMesh (parent of pawn parts) and Halo children.
+                var meshTf = go.transform.Find("TokenMesh");
+                var haloTf = go.transform.Find("Halo");
+
+                // Collect all renderers under TokenMesh (Base + Neck + Head share one material).
+                Renderer[] meshRenderers;
+                if (meshTf != null)
                 {
-                    var mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                    mat.SetColor("_BaseColor", playerColors[p.Id]);
-                    r.sharedMaterial = mat;
+                    meshRenderers = meshTf.GetComponentsInChildren<Renderer>();
+                }
+                else
+                {
+                    var single = go.GetComponentInChildren<Renderer>();
+                    meshRenderers = single != null ? new[] { single } : new Renderer[0];
+                }
+                var haloRenderer = haloTf != null ? haloTf.GetComponent<Renderer>() : null;
+
+                // Main token material — glossy plastic feel, shared across all pawn parts.
+                if (meshRenderers.Length > 0 && litShader != null)
+                {
+                    var mainMat = new Material(litShader);
+                    mainMat.SetColor("_BaseColor", playerColor);
+                    mainMat.SetFloat("_Metallic",   tokenMetallic);
+                    mainMat.SetFloat("_Smoothness", tokenSmoothness);
+                    mainMat.EnableKeyword("_EMISSION");
+                    mainMat.SetColor("_EmissionColor", playerColor * inactiveEmission);
+                    mainMat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+                    foreach (var r in meshRenderers)
+                    {
+                        if (r != null) r.sharedMaterial = mainMat;
+                    }
+                    _mainMats[p.Id] = mainMat;
+                }
+
+                // Halo material — fresh URP/Unlit with transparent setup so we don't depend on prefab.
+                if (haloRenderer != null && unlitShader != null)
+                {
+                    var haloMat = new Material(unlitShader);
+                    haloMat.SetColor("_BaseColor",
+                        new Color(playerColor.r, playerColor.g, playerColor.b, HaloMinAlpha));
+                    haloMat.SetFloat("_Surface", 1f);
+                    haloMat.SetFloat("_Blend",   0f);
+                    haloMat.SetFloat("_ZWrite",  0f);
+                    haloMat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+                    haloMat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+                    haloMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                    haloMat.DisableKeyword("_ALPHATEST_ON");
+                    haloMat.renderQueue = (int)RenderQueue.Transparent;
+                    haloRenderer.sharedMaterial = haloMat;
+                    _haloMats[p.Id]    = haloMat;
+                    _haloObjects[p.Id] = haloTf.gameObject;
+                    // Show halo only if this player is already the active one
+                    // (handles event-order races where OnTurnStarted fired before SpawnTokens).
+                    haloTf.gameObject.SetActive(p.Id == _activePlayerId);
                 }
 
                 _tokens[p.Id] = go.transform;
@@ -60,6 +173,69 @@ namespace UMMonopoly.UI
 
                 // Tiny horizontal offset so tokens don't overlap exactly
                 go.transform.position += new Vector3(p.Id * 0.2f, 0f, p.Id * 0.1f);
+            }
+        }
+
+        /// <summary>
+        /// Places (or recolors) a small "house" cube on the corner of the bought tile.
+        /// Marker color = owner's player color, with a glossy emissive material for visibility.
+        /// </summary>
+        private void HandleTilePurchased(Player p, TileDataSO tile)
+        {
+            if (tile == null) return;
+            if (tile.position < 0 || tile.position >= tileAnchors.Length) return;
+            var anchor = tileAnchors[tile.position];
+            if (anchor == null) return;
+
+            Color color = p.Id < playerColors.Length ? playerColors[p.Id] : Color.white;
+
+            // Create marker lazily; reuse on subsequent updates (e.g., future bankruptcy transfer).
+            if (!_ownerMarkers.TryGetValue(tile.position, out var marker) || marker == null)
+            {
+                marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                marker.name = "OwnerMarker";
+                marker.transform.SetParent(anchor, false);
+                marker.transform.localPosition = new Vector3(0.30f, 0.16f, 0.30f);
+                marker.transform.localScale    = new Vector3(0.18f, 0.12f, 0.18f);
+                var col = marker.GetComponent<Collider>();
+                if (col != null) Destroy(col);
+                _ownerMarkers[tile.position] = marker;
+            }
+
+            var litShader = Shader.Find("Universal Render Pipeline/Lit");
+            if (litShader == null) return;
+            var mat = new Material(litShader);
+            mat.SetColor("_BaseColor", color);
+            mat.SetFloat("_Metallic",   0.2f);
+            mat.SetFloat("_Smoothness", 0.7f);
+            mat.EnableKeyword("_EMISSION");
+            mat.SetColor("_EmissionColor", color * 0.6f);
+            mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            marker.GetComponent<Renderer>().sharedMaterial = mat;
+        }
+
+        private void HandleTurnStarted(int playerId)
+        {
+            // Reset previously-active player: steady inactive emission + hide halo.
+            if (_activePlayerId >= 0 && _activePlayerId != playerId)
+            {
+                if (_mainMats.TryGetValue(_activePlayerId, out var prevMat)
+                    && _activePlayerId < playerColors.Length)
+                {
+                    prevMat.SetColor("_EmissionColor", playerColors[_activePlayerId] * inactiveEmission);
+                }
+                if (_haloObjects.TryGetValue(_activePlayerId, out var prevHalo) && prevHalo != null)
+                {
+                    prevHalo.SetActive(false);
+                }
+            }
+
+            _activePlayerId = playerId;
+
+            // Show new active player's halo (Update will pulse it).
+            if (_haloObjects.TryGetValue(_activePlayerId, out var newHalo) && newHalo != null)
+            {
+                newHalo.SetActive(true);
             }
         }
 

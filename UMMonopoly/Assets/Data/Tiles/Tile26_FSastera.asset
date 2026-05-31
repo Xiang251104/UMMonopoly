@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Tile26_FSastera
   m_EditorClassIdentifier: Assembly-CSharp::UMMonopoly.Data.TileDataSO
   position: 26
-  tileName: Fakulti Sastera
+  tileName: Faculty of Arts
   type: 1
   purchasePrice: 260
   colorGroup: 6
@@ -23,5 +23,5 @@ MonoBehaviour:
   deckType: 0
   icon: {fileID: 0}
   tileColor: {r: 1, g: 1, b: 1, a: 1}
-  locationPhoto: {fileID: 0}
+  locationPhoto: {fileID: 21300000, guid: 904712909520b45489a11f90ad1e3a70, type: 3}
   locationDescription: 

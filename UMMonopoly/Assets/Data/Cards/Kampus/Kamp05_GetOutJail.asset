@@ -16,3 +16,4 @@ MonoBehaviour:
   description: "Get Out of DTC Free \u2014 keep until needed."
   effect: 5
   amount: 0
+  cardImage: {fileID: 21300000, guid: 30991eddcfb57294a8acd34881ddab5b, type: 3}

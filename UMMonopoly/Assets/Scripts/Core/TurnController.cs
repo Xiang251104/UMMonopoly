@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UMMonopoly.Entities;
 using UMMonopoly.Systems;
 using UMMonopoly.UI;
 
@@ -52,6 +53,13 @@ namespace UMMonopoly.Core
             int resultA = 0, resultB = 0;
             bool doneA = false, doneB = false;
 
+            bool hasPhysicalDice = diceA != null && diceB != null;
+            if (hasPhysicalDice)
+            {
+                Vector3 mid = (diceA.transform.position + diceB.transform.position) * 0.5f;
+                EventBus.RaiseDiceRollStarted(mid);
+            }
+
             if (diceA != null) diceA.Roll(v => { resultA = v; doneA = true; });
             else { resultA = Random.Range(1, 7); doneA = true; }
 
@@ -61,6 +69,8 @@ namespace UMMonopoly.Core
             // Wait for both dice to settle
             yield return new WaitUntil(() => doneA && doneB);
             yield return new WaitForSeconds(pauseAfterRoll);
+
+            if (hasPhysicalDice) EventBus.RaiseDiceRollEnded();
 
             // Override the GameManager's internal DiceRoller with the physical result
             gm.Dice.OverrideResult(resultA, resultB);

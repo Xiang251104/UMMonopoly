@@ -16,3 +16,4 @@ MonoBehaviour:
   description: "Plagiarism case detected \u2014 go to DTC."
   effect: 4
   amount: 0
+  cardImage: {fileID: 21300000, guid: 38f6f38d3fb744b4fbde136b33d9e264, type: 3}

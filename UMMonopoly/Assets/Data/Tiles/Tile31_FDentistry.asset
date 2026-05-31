@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Tile31_FDentistry
   m_EditorClassIdentifier: Assembly-CSharp::UMMonopoly.Data.TileDataSO
   position: 31
-  tileName: Fakulti Pergigian
+  tileName: Faculty of Dentistry
   type: 1
   purchasePrice: 300
   colorGroup: 7
@@ -23,5 +23,5 @@ MonoBehaviour:
   deckType: 0
   icon: {fileID: 0}
   tileColor: {r: 1, g: 1, b: 1, a: 1}
-  locationPhoto: {fileID: 0}
+  locationPhoto: {fileID: 21300000, guid: 250c6a43f77a93348a75271078c01c4e, type: 3}
   locationDescription: 

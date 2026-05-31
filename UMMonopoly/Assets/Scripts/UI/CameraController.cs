@@ -23,6 +23,7 @@ namespace UMMonopoly.UI
         public float overviewDistance  = 18f;
         public float followDistance    =  9f;
         public float landingDistance   =  5f;
+        public float diceFocusDistance =  4f;
 
         [Header("Timing")]
         public float landingZoomDuration = 2.5f;   // seconds to stay in close-up
@@ -42,7 +43,7 @@ namespace UMMonopoly.UI
         public float maxDistance = 22f;
 
         // ── internal state ───────────────────────────────────────────────────
-        private enum CamState { Overview, TurnFocus, MovementFollow, LandingZoom }
+        private enum CamState { Overview, TurnFocus, MovementFollow, LandingZoom, DiceFocus }
         private CamState _state = CamState.Overview;
 
         private float   _pitch;
@@ -68,14 +69,18 @@ namespace UMMonopoly.UI
 
         private void OnEnable()
         {
-            EventBus.OnTurnStarted  += HandleTurnStarted;
-            EventBus.OnPlayerMoved  += HandlePlayerMoved;
+            EventBus.OnTurnStarted     += HandleTurnStarted;
+            EventBus.OnPlayerMoved     += HandlePlayerMoved;
+            EventBus.OnDiceRollStarted += HandleDiceRollStarted;
+            EventBus.OnDiceRollEnded   += HandleDiceRollEnded;
         }
 
         private void OnDisable()
         {
-            EventBus.OnTurnStarted  -= HandleTurnStarted;
-            EventBus.OnPlayerMoved  -= HandlePlayerMoved;
+            EventBus.OnTurnStarted     -= HandleTurnStarted;
+            EventBus.OnPlayerMoved     -= HandlePlayerMoved;
+            EventBus.OnDiceRollStarted -= HandleDiceRollStarted;
+            EventBus.OnDiceRollEnded   -= HandleDiceRollEnded;
         }
 
         // ── event handlers ───────────────────────────────────────────────────
@@ -97,6 +102,21 @@ namespace UMMonopoly.UI
             _state          = CamState.MovementFollow;
             _targetDistance = followDistance;
             // pivot will track token live in Update
+        }
+
+        private void HandleDiceRollStarted(Vector3 center)
+        {
+            _state          = CamState.DiceFocus;
+            _targetPivot    = center;
+            _targetDistance = diceFocusDistance;
+        }
+
+        private void HandleDiceRollEnded()
+        {
+            _state          = CamState.TurnFocus;
+            _targetDistance = followDistance;
+            if (GameManager.Instance != null)
+                SetPivotToTile(GameManager.Instance.Players[_currentPlayerIdx].BoardPosition);
         }
 
         // ── Update ───────────────────────────────────────────────────────────
@@ -177,6 +197,10 @@ namespace UMMonopoly.UI
                         _state          = CamState.TurnFocus;
                         _targetDistance = followDistance;
                     }
+                    break;
+
+                case CamState.DiceFocus:
+                    // transitions are event-driven (HandleDiceRollEnded); just hold focus
                     break;
             }
 

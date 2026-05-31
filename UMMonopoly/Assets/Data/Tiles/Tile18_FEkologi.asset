@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Tile18_FEkologi
   m_EditorClassIdentifier: Assembly-CSharp::UMMonopoly.Data.TileDataSO
   position: 18
-  tileName: Fakulti Ekologi
+  tileName: Faculty of Ecology
   type: 1
   purchasePrice: 180
   colorGroup: 4
@@ -23,5 +23,5 @@ MonoBehaviour:
   deckType: 0
   icon: {fileID: 0}
   tileColor: {r: 1, g: 1, b: 1, a: 1}
-  locationPhoto: {fileID: 0}
+  locationPhoto: {fileID: 21300000, guid: e3b10881421751f41a9886c1a7fd6dde, type: 3}
   locationDescription: 

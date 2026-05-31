@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Kamp07_ClubFund
   m_EditorClassIdentifier: Assembly-CSharp::UMMonopoly.Data.CardDataSO
   deck: 1
-  description: "Club fundraiser success \u2014 collect RM 25 per player."
+  description: "Club fundraiser success \u2014 collect RM 15 per player."
   effect: 6
-  amount: 25
+  amount: 15
+  cardImage: {fileID: 21300000, guid: e751315f1efd85b469e734fb4f6fa52b, type: 3}

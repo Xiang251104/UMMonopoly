@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Tile11_FSSL
   m_EditorClassIdentifier: Assembly-CSharp::UMMonopoly.Data.TileDataSO
   position: 11
-  tileName: FSSL
+  tileName: Faculty of Languages
   type: 1
   purchasePrice: 140
   colorGroup: 3
@@ -23,5 +23,5 @@ MonoBehaviour:
   deckType: 0
   icon: {fileID: 0}
   tileColor: {r: 1, g: 1, b: 1, a: 1}
-  locationPhoto: {fileID: 0}
+  locationPhoto: {fileID: 21300000, guid: bd48cbd6bdafa4642a4eb24a5d8586b7, type: 3}
   locationDescription: 

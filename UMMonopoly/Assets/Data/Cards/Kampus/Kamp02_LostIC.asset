@@ -16,3 +16,4 @@ MonoBehaviour:
   description: "Lost student ID \u2014 pay RM 30 replacement fee."
   effect: 1
   amount: 30
+  cardImage: {fileID: 21300000, guid: 70eb36a367c0ba5499674d47800bc020, type: 3}

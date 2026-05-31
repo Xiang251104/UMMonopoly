@@ -1,4 +1,5 @@
 using UMMonopoly.Data;
+using UnityEngine;
 
 namespace UMMonopoly.Entities
 {
@@ -8,6 +9,7 @@ namespace UMMonopoly.Entities
         public string Description => Data.description;
         public CardEffectType Effect => Data.effect;
         public int Amount => Data.amount;
+        public Sprite Image => Data.cardImage;
 
         public Card(CardDataSO data)
         {

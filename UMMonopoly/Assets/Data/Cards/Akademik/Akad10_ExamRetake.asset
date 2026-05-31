@@ -16,3 +16,4 @@ MonoBehaviour:
   description: "Must retake exam \u2014 pay RM 75 admin fee."
   effect: 1
   amount: 75
+  cardImage: {fileID: 21300000, guid: cb244feaae0330c49a514caa88588d86, type: 3}

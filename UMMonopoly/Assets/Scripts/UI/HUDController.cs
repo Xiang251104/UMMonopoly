@@ -18,10 +18,18 @@ namespace UMMonopoly.UI
         public Button rollButton;
         public Button endTurnButton;
         public Button buyButton;
+        [Tooltip("Visible only when the active player is in jail AND owns ≥1 Get-Out-of-Jail card.")]
+        public Button useJailCardButton;
+        [Tooltip("Visible only when the active player is in jail. Interactable only if they can afford the fine.")]
+        public Button payJailFineButton;
+        [Tooltip("Jail fine cost — matches GameConfigSO.jailFine.")]
+        public int jailFineAmount = 50;
         [Tooltip("A TMP_Text UI element used to show brief toast messages (rent paid, jail, etc.)")]
         public TMP_Text notificationLabel;
-        [Tooltip("Dark-navy pill Image that sits behind the notification label — auto-created if left empty.")]
+        [Tooltip("Dark-navy pill Image that sits behind the notification label.")]
         public Image notificationBackground;
+        [Tooltip("CanvasGroup on the toast root — enables fade-in/out animation when wired.")]
+        public CanvasGroup notificationCanvasGroup;
         [Tooltip("Reference to TileLandingPopup — auto-shown after token stops on a tile")]
         public TileLandingPopup tileLandingPopup;
         [Tooltip("Reference to TurnController — used to wait for dice/token animation to finish")]
@@ -29,13 +37,6 @@ namespace UMMonopoly.UI
 
         private readonly Dictionary<int, PlayerCardUI> _cards = new Dictionary<int, PlayerCardUI>();
         private Coroutine _notifCoroutine;
-
-        private void Start()
-        {
-            // Auto-create the notification background pill if not wired in Inspector
-            if (notificationLabel != null && notificationBackground == null)
-                notificationBackground = BuildNotificationPill();
-        }
 
         private void OnEnable()
         {
@@ -49,6 +50,7 @@ namespace UMMonopoly.UI
             EventBus.OnRentPaid       += HandleRentPaid;
             EventBus.OnSentToJail     += HandleSentToJail;
             EventBus.OnPropertyBought += HandlePropertyBought;
+            EventBus.OnTilePurchased  += HandleTilePurchased;
             EventBus.OnTileResolved   += HandleTileResolved;
         }
 
@@ -64,6 +66,7 @@ namespace UMMonopoly.UI
             EventBus.OnRentPaid       -= HandleRentPaid;
             EventBus.OnSentToJail     -= HandleSentToJail;
             EventBus.OnPropertyBought -= HandlePropertyBought;
+            EventBus.OnTilePurchased  -= HandleTilePurchased;
             EventBus.OnTileResolved   -= HandleTileResolved;
         }
 
@@ -87,6 +90,7 @@ namespace UMMonopoly.UI
             if (rollButton != null) rollButton.interactable = true;
             if (endTurnButton != null) endTurnButton.interactable = false;
             RefreshBuyButton();
+            RefreshJailButtons();
 
             // Pulse-highlight the active player card; dim all others
             foreach (var kvp in _cards)
@@ -99,11 +103,13 @@ namespace UMMonopoly.UI
             if (rollButton != null) rollButton.interactable = false;
             if (endTurnButton != null) endTurnButton.interactable = true;
             RefreshBuyButton();
+            RefreshJailButtons();
         }
 
         private void HandleMoneyChanged(Player p, int delta)
         {
             if (_cards.TryGetValue(p.Id, out var c)) c.Refresh();
+            RefreshJailButtons();
         }
 
         private void HandleBankrupt(Player p)
@@ -138,8 +144,14 @@ namespace UMMonopoly.UI
 
         private void HandlePropertyBought(Player p, PropertyTile pt)
         {
+            // Notification handled by HandleTilePurchased (fires for property + station + utility)
             RefreshBuyButton();
-            ShowNotification($"{p.Name} bought {pt.Data.tileName} for RM{pt.Data.purchasePrice}");
+        }
+
+        private void HandleTilePurchased(Player p, UMMonopoly.Data.TileDataSO tile)
+        {
+            RefreshBuyButton();
+            ShowNotification($"{p.Name} bought {tile.tileName} for RM{tile.purchasePrice}");
         }
 
         private void HandleTurnEnded(int idx)
@@ -152,6 +164,7 @@ namespace UMMonopoly.UI
         private void HandleTileResolved()
         {
             RefreshBuyButton();
+            RefreshJailButtons();
             if (tileLandingPopup != null)
                 StartCoroutine(ShowLandingPopupAfterAnimation());
         }
@@ -181,35 +194,51 @@ namespace UMMonopoly.UI
         private IEnumerator NotificationRoutine(string message)
         {
             notificationLabel.text = message;
-            notificationLabel.gameObject.SetActive(true);
-            if (notificationBackground != null) notificationBackground.gameObject.SetActive(true);
-            yield return new WaitForSeconds(3.5f);
-            notificationLabel.gameObject.SetActive(false);
-            if (notificationBackground != null) notificationBackground.gameObject.SetActive(false);
-        }
 
-        private Image BuildNotificationPill()
-        {
-            var bgGO  = new GameObject("NotificationBg", typeof(RectTransform));
-            bgGO.transform.SetParent(notificationLabel.transform.parent, false);
+            // Pick the root that gets shown/hidden — prefer the canvasGroup parent if wired
+            GameObject root = notificationCanvasGroup != null
+                ? notificationCanvasGroup.gameObject
+                : notificationLabel.gameObject;
+            root.SetActive(true);
+            if (notificationBackground != null && notificationCanvasGroup == null)
+                notificationBackground.gameObject.SetActive(true);
 
-            // Insert immediately before the label so it renders behind it
-            bgGO.transform.SetSiblingIndex(notificationLabel.transform.GetSiblingIndex());
+            const float fadeIn  = 0.25f;
+            const float hold    = 3.0f;
+            const float fadeOut = 0.5f;
 
-            var bgRect  = bgGO.GetComponent<RectTransform>();
-            var lblRect = notificationLabel.rectTransform;
+            // Fade in
+            if (notificationCanvasGroup != null)
+            {
+                notificationCanvasGroup.alpha = 0f;
+                float t = 0f;
+                while (t < fadeIn)
+                {
+                    t += Time.unscaledDeltaTime;
+                    notificationCanvasGroup.alpha = Mathf.Clamp01(t / fadeIn);
+                    yield return null;
+                }
+                notificationCanvasGroup.alpha = 1f;
+            }
 
-            bgRect.anchorMin        = lblRect.anchorMin;
-            bgRect.anchorMax        = lblRect.anchorMax;
-            bgRect.pivot            = lblRect.pivot;
-            bgRect.anchoredPosition = lblRect.anchoredPosition;
-            // Pill is slightly wider/taller than the text label
-            bgRect.sizeDelta = lblRect.sizeDelta + new Vector2(48f, 24f);
+            yield return new WaitForSeconds(hold);
 
-            var img = bgGO.AddComponent<Image>();
-            img.color = new Color(0.039f, 0.078f, 0.157f, 0.85f); // dark navy 85%
-            bgGO.SetActive(false);
-            return img;
+            // Fade out
+            if (notificationCanvasGroup != null)
+            {
+                float t = 0f;
+                while (t < fadeOut)
+                {
+                    t += Time.unscaledDeltaTime;
+                    notificationCanvasGroup.alpha = 1f - Mathf.Clamp01(t / fadeOut);
+                    yield return null;
+                }
+                notificationCanvasGroup.alpha = 0f;
+            }
+
+            root.SetActive(false);
+            if (notificationBackground != null && notificationCanvasGroup == null)
+                notificationBackground.gameObject.SetActive(false);
         }
 
         private void RefreshBuyButton()
@@ -244,6 +273,41 @@ namespace UMMonopoly.UI
             GameManager.Instance.TryBuyCurrentTile();
             RefreshBuyButton();
             foreach (var c in _cards.Values) c.Refresh();
+        }
+
+        public void OnUseJailCardPressed()
+        {
+            if (GameManager.Instance == null) return;
+            GameManager.Instance.AttemptJailExit(payFine: false);
+            RefreshJailButtons();
+            foreach (var c in _cards.Values) c.Refresh();
+        }
+
+        public void OnPayJailFinePressed()
+        {
+            if (GameManager.Instance == null) return;
+            GameManager.Instance.AttemptJailExit(payFine: true);
+            RefreshJailButtons();
+            foreach (var c in _cards.Values) c.Refresh();
+        }
+
+        private void RefreshJailButtons()
+        {
+            if (GameManager.Instance == null) return;
+            var cp = GameManager.Instance.CurrentPlayer;
+            bool inJail = cp != null && cp.InJail;
+
+            if (useJailCardButton != null)
+            {
+                bool show = inJail && cp.GetOutOfJailCards > 0;
+                useJailCardButton.gameObject.SetActive(show);
+                useJailCardButton.interactable = show;
+            }
+            if (payJailFineButton != null)
+            {
+                payJailFineButton.gameObject.SetActive(inJail);
+                payJailFineButton.interactable = inJail && cp.Money >= jailFineAmount;
+            }
         }
     }
 }

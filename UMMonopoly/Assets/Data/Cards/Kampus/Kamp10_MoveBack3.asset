@@ -16,3 +16,4 @@ MonoBehaviour:
   description: "Got lost on campus \u2014 move back 3 spaces."
   effect: 3
   amount: -3
+  cardImage: {fileID: 21300000, guid: ba0bf6ab93ab1214caaa69aa8773f43a, type: 3}

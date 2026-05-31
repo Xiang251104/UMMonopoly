@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Tile04_Tax1
   m_EditorClassIdentifier: Assembly-CSharp::UMMonopoly.Data.TileDataSO
   position: 4
-  tileName: Cukai Pendapatan
+  tileName: Yuran Pengajian
   type: 3
   purchasePrice: 0
   colorGroup: 0
@@ -23,5 +23,5 @@ MonoBehaviour:
   deckType: 0
   icon: {fileID: 0}
   tileColor: {r: 1, g: 1, b: 1, a: 1}
-  locationPhoto: {fileID: 0}
+  locationPhoto: {fileID: 21300000, guid: d92105fc778914843ad2ad6a484c6021, type: 3}
   locationDescription: 

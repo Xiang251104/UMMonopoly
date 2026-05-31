@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d96ea10b1b576c240a748ee73b793985, type: 3}
   m_Name: MainGameConfig
   m_EditorClassIdentifier: Assembly-CSharp::UMMonopoly.Data.GameConfigSO
-  startingMoney: 1500
+  startingMoney: 1750
   salaryOnGo: 200
   jailFine: 50
   maxJailTurns: 3

@@ -16,3 +16,4 @@ MonoBehaviour:
   description: "Parking summon \u2014 pay RM 50."
   effect: 1
   amount: 50
+  cardImage: {fileID: 21300000, guid: d76d9f4a86982c34b9c10a7d6d75b040, type: 3}

@@ -14,5 +14,8 @@ namespace UMMonopoly.Data
 
         [Tooltip("Money amount, tile index, or step count depending on effect type.")]
         public int amount;
+
+        [Tooltip("Full card artwork shown in the draw popup. Image should contain all info (title, description, effect).")]
+        public Sprite cardImage;
     }
 }

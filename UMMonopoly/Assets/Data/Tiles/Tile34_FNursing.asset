@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Tile34_FNursing
   m_EditorClassIdentifier: Assembly-CSharp::UMMonopoly.Data.TileDataSO
   position: 34
-  tileName: Fakulti Kejururawatan
+  tileName: Fakulti Sukan dan Sains Eksesais
   type: 1
   purchasePrice: 320
   colorGroup: 7
@@ -23,5 +23,5 @@ MonoBehaviour:
   deckType: 0
   icon: {fileID: 0}
   tileColor: {r: 1, g: 1, b: 1, a: 1}
-  locationPhoto: {fileID: 0}
+  locationPhoto: {fileID: 21300000, guid: c59bb4129ad1af348b969cb54f12110d, type: 3}
   locationDescription: 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Tile39_DewanTunku
   m_EditorClassIdentifier: Assembly-CSharp::UMMonopoly.Data.TileDataSO
   position: 39
-  tileName: Dewan Tunku Canselor
+  tileName: KPS
   type: 1
   purchasePrice: 400
   colorGroup: 8
@@ -23,5 +23,5 @@ MonoBehaviour:
   deckType: 0
   icon: {fileID: 0}
   tileColor: {r: 1, g: 1, b: 1, a: 1}
-  locationPhoto: {fileID: 0}
+  locationPhoto: {fileID: 21300000, guid: e6338fb841435ed4caad05e36b04276e, type: 3}
   locationDescription: 

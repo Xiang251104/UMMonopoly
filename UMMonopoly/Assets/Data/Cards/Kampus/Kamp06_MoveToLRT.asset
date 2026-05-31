@@ -16,3 +16,4 @@ MonoBehaviour:
   description: "Catch the LRT \u2014 move to LRT Universiti (pos 15)."
   effect: 2
   amount: 15
+  cardImage: {fileID: 21300000, guid: 38a65e48eedadd543a1ed1b131bf91ce, type: 3}

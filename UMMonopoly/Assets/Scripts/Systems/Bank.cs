@@ -14,6 +14,7 @@ namespace UMMonopoly.Systems
             buyer.OwnedProperties.Add(prop);
             EventBus.RaiseMoneyChanged(buyer, -prop.Data.purchasePrice);
             EventBus.RaisePropertyBought(buyer, prop);
+            EventBus.RaiseTilePurchased(buyer, prop.Data);
             return true;
         }
 
@@ -23,6 +24,7 @@ namespace UMMonopoly.Systems
             if (!buyer.TryPay(station.Data.purchasePrice)) return false;
             station.Owner = buyer;
             EventBus.RaiseMoneyChanged(buyer, -station.Data.purchasePrice);
+            EventBus.RaiseTilePurchased(buyer, station.Data);
             return true;
         }
 
@@ -32,6 +34,7 @@ namespace UMMonopoly.Systems
             if (!buyer.TryPay(util.Data.purchasePrice)) return false;
             util.Owner = buyer;
             EventBus.RaiseMoneyChanged(buyer, -util.Data.purchasePrice);
+            EventBus.RaiseTilePurchased(buyer, util.Data);
             return true;
         }
 

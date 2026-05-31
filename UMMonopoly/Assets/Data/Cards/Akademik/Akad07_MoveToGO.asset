@@ -16,3 +16,4 @@ MonoBehaviour:
   description: Semester break! Advance to GO and collect salary.
   effect: 2
   amount: 0
+  cardImage: {fileID: 21300000, guid: acaf63e8d4c954241b810a9cc2985eef, type: 3}
