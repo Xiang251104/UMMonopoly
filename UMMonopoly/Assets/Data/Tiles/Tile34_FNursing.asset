@@ -21,7 +21,7 @@ MonoBehaviour:
   upgradeCost: 200
   taxAmount: 0
   deckType: 0
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 03c08b515fec68349be2cf479a9f0357, type: 3}
   tileColor: {r: 1, g: 1, b: 1, a: 1}
   locationPhoto: {fileID: 21300000, guid: c59bb4129ad1af348b969cb54f12110d, type: 3}
   locationDescription: 
