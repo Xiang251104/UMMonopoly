@@ -32,6 +32,12 @@ namespace UMMonopoly.UI
         public CanvasGroup notificationCanvasGroup;
         [Tooltip("Reference to TileLandingPopup — auto-shown after token stops on a tile")]
         public TileLandingPopup tileLandingPopup;
+        [Tooltip("Reference to WinScreen — auto-shown when one player remains after bankruptcies.")]
+        public WinScreen winScreen;
+        [Tooltip("Reference to TradeModal — opened by the Trade button during DecisionPhase.")]
+        public TradeModal tradeModal;
+        [Tooltip("HUD button that opens the TradeModal. Visible only during the current player's DecisionPhase.")]
+        public Button tradeButton;
         [Tooltip("Reference to TurnController — used to wait for dice/token animation to finish")]
         public TurnController turnController;
 
@@ -52,6 +58,7 @@ namespace UMMonopoly.UI
             EventBus.OnPropertyBought += HandlePropertyBought;
             EventBus.OnTilePurchased  += HandleTilePurchased;
             EventBus.OnTileResolved   += HandleTileResolved;
+            EventBus.OnPassedGo       += HandlePassedGo;
         }
 
         private void OnDisable()
@@ -68,6 +75,7 @@ namespace UMMonopoly.UI
             EventBus.OnPropertyBought -= HandlePropertyBought;
             EventBus.OnTilePurchased  -= HandleTilePurchased;
             EventBus.OnTileResolved   -= HandleTileResolved;
+            EventBus.OnPassedGo       -= HandlePassedGo;
         }
 
         public void BuildPlayerCards(List<Player> players)
@@ -91,6 +99,7 @@ namespace UMMonopoly.UI
             if (endTurnButton != null) endTurnButton.interactable = false;
             RefreshBuyButton();
             RefreshJailButtons();
+            RefreshTradeButton();
 
             // Pulse-highlight the active player card; dim all others
             foreach (var kvp in _cards)
@@ -123,6 +132,7 @@ namespace UMMonopoly.UI
             if (rollButton != null) rollButton.interactable = false;
             if (endTurnButton != null) endTurnButton.interactable = false;
             if (buyButton != null) buyButton.interactable = false;
+            if (winScreen != null && winner != null) winScreen.Show(winner);
         }
 
         private void HandlePlayerMoved(Player p, int pos)
@@ -154,6 +164,11 @@ namespace UMMonopoly.UI
             ShowNotification($"{p.Name} bought {tile.tileName} for RM{tile.purchasePrice}");
         }
 
+        private void HandlePassedGo(Player p, int salary)
+        {
+            ShowNotification($"{p.Name} passed GO — collect RM {salary}");
+        }
+
         private void HandleTurnEnded(int idx)
         {
             // Close the landing popup when the player ends their turn
@@ -165,6 +180,7 @@ namespace UMMonopoly.UI
         {
             RefreshBuyButton();
             RefreshJailButtons();
+            RefreshTradeButton();
             if (tileLandingPopup != null)
                 StartCoroutine(ShowLandingPopupAfterAnimation());
         }
@@ -275,6 +291,24 @@ namespace UMMonopoly.UI
             foreach (var c in _cards.Values) c.Refresh();
         }
 
+        public void OnTradePressed()
+        {
+            var gm = GameManager.Instance;
+            if (gm == null || tradeModal == null) return;
+            var from = gm.CurrentPlayer;
+            // Pick the first non-current, non-bankrupt player as the trade partner.
+            // (For >2-player games we'd add a "choose opponent" dialog here.)
+            Player to = null;
+            foreach (var p in gm.Players)
+            {
+                if (p == from || p.IsBankrupt) continue;
+                to = p;
+                break;
+            }
+            if (to == null) return;
+            tradeModal.Show(from, to);
+        }
+
         public void OnUseJailCardPressed()
         {
             if (GameManager.Instance == null) return;
@@ -289,6 +323,18 @@ namespace UMMonopoly.UI
             GameManager.Instance.AttemptJailExit(payFine: true);
             RefreshJailButtons();
             foreach (var c in _cards.Values) c.Refresh();
+        }
+
+        private void RefreshTradeButton()
+        {
+            if (tradeButton == null) return;
+            if (GameManager.Instance == null) { tradeButton.gameObject.SetActive(false); return; }
+            var gm = GameManager.Instance;
+            bool inDecision = gm.CurrentState == GameState.DecisionPhase;
+            int alive = 0;
+            foreach (var p in gm.Players) if (!p.IsBankrupt) alive++;
+            bool canTrade = inDecision && alive >= 2;
+            tradeButton.gameObject.SetActive(canTrade);
         }
 
         private void RefreshJailButtons()

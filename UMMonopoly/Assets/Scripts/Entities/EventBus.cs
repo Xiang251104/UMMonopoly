@@ -21,6 +21,8 @@ namespace UMMonopoly.Entities
         public static event Action<Vector3> OnDiceRollStarted;            // world-space midpoint of dice for camera focus
         public static event Action OnDiceRollEnded;                       // fired after dice anim + pauseAfterRoll
         public static event Action<Player, UMMonopoly.Data.TileDataSO> OnTilePurchased; // any tile bought (property/station/utility)
+        public static event Action<Player, int> OnPassedGo;                // player, salary amount — fired whenever a player crosses GO
+        public static event Action<TradeOffer>  OnTradeCompleted;          // fired after Bank.ExecuteTrade succeeds
 
         public static void RaiseDiceRolled(Player p, int total) => OnDiceRolled?.Invoke(p, total);
         public static void RaisePlayerMoved(Player p, int pos) => OnPlayerMoved?.Invoke(p, pos);
@@ -38,5 +40,7 @@ namespace UMMonopoly.Entities
         public static void RaiseDiceRollStarted(Vector3 center) => OnDiceRollStarted?.Invoke(center);
         public static void RaiseDiceRollEnded() => OnDiceRollEnded?.Invoke();
         public static void RaiseTilePurchased(Player p, UMMonopoly.Data.TileDataSO t) => OnTilePurchased?.Invoke(p, t);
+        public static void RaisePassedGo(Player p, int salary) => OnPassedGo?.Invoke(p, salary);
+        public static void RaiseTradeCompleted(TradeOffer t) => OnTradeCompleted?.Invoke(t);
     }
 }

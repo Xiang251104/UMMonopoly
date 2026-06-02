@@ -55,8 +55,9 @@ namespace UMMonopoly.UI
         private readonly Dictionary<int, Material>   _mainMats = new Dictionary<int, Material>();
         private readonly Dictionary<int, Material>   _haloMats = new Dictionary<int, Material>();
         private readonly Dictionary<int, GameObject> _haloObjects = new Dictionary<int, GameObject>();
-        // Ownership markers keyed by tile position (0..39). Created lazily on first purchase.
-        private readonly Dictionary<int, GameObject> _ownerMarkers = new Dictionary<int, GameObject>();
+        // Ownership markers keyed by tile position (0..39). Each tile holds a list of
+        // cubes — index 0 is the base ownership cube; subsequent indexes are upgrade "houses".
+        private readonly Dictionary<int, List<GameObject>> _ownerMarkers = new Dictionary<int, List<GameObject>>();
         private int _activePlayerId = -1;
 
         const float HaloMinAlpha = 0.35f;
@@ -64,16 +65,59 @@ namespace UMMonopoly.UI
 
         private void OnEnable()
         {
-            EventBus.OnPlayerMoved    += HandleMoved;
-            EventBus.OnTurnStarted    += HandleTurnStarted;
-            EventBus.OnTilePurchased  += HandleTilePurchased;
+            EventBus.OnPlayerMoved       += HandleMoved;
+            EventBus.OnTurnStarted       += HandleTurnStarted;
+            EventBus.OnTilePurchased     += HandleTilePurchased;
+            EventBus.OnPropertyUpgraded  += HandlePropertyUpgraded;
+            EventBus.OnSentToJail        += HandleSentToJail;
+            EventBus.OnTradeCompleted    += HandleTradeCompleted;
         }
 
         private void OnDisable()
         {
-            EventBus.OnPlayerMoved    -= HandleMoved;
-            EventBus.OnTurnStarted    -= HandleTurnStarted;
-            EventBus.OnTilePurchased  -= HandleTilePurchased;
+            EventBus.OnPlayerMoved       -= HandleMoved;
+            EventBus.OnTurnStarted       -= HandleTurnStarted;
+            EventBus.OnTilePurchased     -= HandleTilePurchased;
+            EventBus.OnPropertyUpgraded  -= HandlePropertyUpgraded;
+            EventBus.OnSentToJail        -= HandleSentToJail;
+            EventBus.OnTradeCompleted    -= HandleTradeCompleted;
+        }
+
+        /// <summary>
+        /// Recolors every ownership marker on tiles transferred via a trade.
+        /// Marker count (= 1 + UpgradeLevel) is unchanged; only the color flips to the new owner.
+        /// </summary>
+        private void HandleTradeCompleted(TradeOffer offer)
+        {
+            if (offer == null) return;
+            // After the trade, FromGives belong to To and ToGives belong to From.
+            foreach (var t in offer.FromGives) RecolorMarkersFor(t, offer.To);
+            foreach (var t in offer.ToGives)   RecolorMarkersFor(t, offer.From);
+        }
+
+        private void RecolorMarkersFor(Tile tile, Player newOwner)
+        {
+            if (tile == null || tile.Data == null || newOwner == null) return;
+            int pos = tile.Data.position;
+            if (pos < 0 || pos >= tileAnchors.Length) return;
+            if (!_ownerMarkers.TryGetValue(pos, out var markers) || markers == null) return;
+
+            Color color = newOwner.Id < playerColors.Length ? playerColors[newOwner.Id] : Color.white;
+            foreach (var m in markers)
+                if (m != null) ApplyMarkerColor(m, color);
+        }
+
+        /// <summary>
+        /// Snaps the token instantly to the jail tile (no hop animation) when a player
+        /// is sent to jail by GoToJailTile or a card. Player.BoardPosition is already updated
+        /// at this point by the backend.
+        /// </summary>
+        private void HandleSentToJail(Player player)
+        {
+            if (player == null) return;
+            if (!_tokens.TryGetValue(player.Id, out var token) || token == null) return;
+            token.position = GetAnchorPos(player.BoardPosition);
+            _playerPositions[player.Id] = player.BoardPosition;
         }
 
         private void Update()
@@ -177,8 +221,8 @@ namespace UMMonopoly.UI
         }
 
         /// <summary>
-        /// Places (or recolors) a small "house" cube on the corner of the bought tile.
-        /// Marker color = owner's player color, with a glossy emissive material for visibility.
+        /// Adds the base ownership cube to the corner of a newly bought tile.
+        /// If the player already owns it (e.g., bankruptcy transfer in future), recolors all cubes.
         /// </summary>
         private void HandleTilePurchased(Player p, TileDataSO tile)
         {
@@ -189,19 +233,65 @@ namespace UMMonopoly.UI
 
             Color color = p.Id < playerColors.Length ? playerColors[p.Id] : Color.white;
 
-            // Create marker lazily; reuse on subsequent updates (e.g., future bankruptcy transfer).
-            if (!_ownerMarkers.TryGetValue(tile.position, out var marker) || marker == null)
+            if (!_ownerMarkers.TryGetValue(tile.position, out var markers) || markers == null)
             {
-                marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                marker.name = "OwnerMarker";
-                marker.transform.SetParent(anchor, false);
-                marker.transform.localPosition = new Vector3(0.30f, 0.16f, 0.30f);
-                marker.transform.localScale    = new Vector3(0.18f, 0.12f, 0.18f);
-                var col = marker.GetComponent<Collider>();
-                if (col != null) Destroy(col);
-                _ownerMarkers[tile.position] = marker;
+                markers = new List<GameObject>();
+                _ownerMarkers[tile.position] = markers;
             }
 
+            if (markers.Count == 0)
+            {
+                AddMarkerCube(anchor, color, 0, markers);
+            }
+            else
+            {
+                // Already has cubes — recolor them all (covers future ownership transfers)
+                foreach (var m in markers)
+                    if (m != null) ApplyMarkerColor(m, color);
+            }
+        }
+
+        /// <summary>
+        /// Each upgrade adds another "house" cube next to the existing ones on the tile.
+        /// </summary>
+        private void HandlePropertyUpgraded(Player p, PropertyTile pt)
+        {
+            if (pt == null) return;
+            int pos = pt.Data.position;
+            if (pos < 0 || pos >= tileAnchors.Length) return;
+            var anchor = tileAnchors[pos];
+            if (anchor == null) return;
+
+            Color color = p.Id < playerColors.Length ? playerColors[p.Id] : Color.white;
+
+            if (!_ownerMarkers.TryGetValue(pos, out var markers) || markers == null)
+            {
+                markers = new List<GameObject>();
+                _ownerMarkers[pos] = markers;
+            }
+            AddMarkerCube(anchor, color, markers.Count, markers);
+        }
+
+        /// <summary>
+        /// Spawns a single ownership/house cube at the given index along the tile corner.
+        /// </summary>
+        private void AddMarkerCube(Transform anchor, Color color, int index, List<GameObject> markers)
+        {
+            var marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            marker.name = $"OwnerMarker_{index}";
+            marker.transform.SetParent(anchor, false);
+            // Stack cubes along the tile's local Z axis: indexes 0..4 fan out from +Z to -Z
+            float zOffset = 0.30f - index * 0.18f;
+            marker.transform.localPosition = new Vector3(0.30f, 0.16f, zOffset);
+            marker.transform.localScale    = new Vector3(0.16f, 0.12f, 0.16f);
+            var col = marker.GetComponent<Collider>();
+            if (col != null) Destroy(col);
+            ApplyMarkerColor(marker, color);
+            markers.Add(marker);
+        }
+
+        private void ApplyMarkerColor(GameObject marker, Color color)
+        {
             var litShader = Shader.Find("Universal Render Pipeline/Lit");
             if (litShader == null) return;
             var mat = new Material(litShader);
@@ -255,6 +345,15 @@ namespace UMMonopoly.UI
 
             while (current != destination)
             {
+                // If the player was sent to jail mid-flight (e.g., they landed on GoToJail),
+                // abort the hop and snap to wherever player.BoardPosition is now (jail tile).
+                if (player.InJail)
+                {
+                    token.position = GetAnchorPos(player.BoardPosition);
+                    _playerPositions[player.Id] = player.BoardPosition;
+                    IsMoving = false;
+                    yield break;
+                }
                 int next = (current + 1) % boardSize;
                 yield return StartCoroutine(HopOnce(token, GetAnchorPos(current), GetAnchorPos(next)));
                 current = next;
@@ -273,6 +372,9 @@ namespace UMMonopoly.UI
 
         private IEnumerator HopOnce(Transform token, Vector3 from, Vector3 to)
         {
+            if (UMMonopoly.Systems.AudioManager.Instance != null)
+                UMMonopoly.Systems.AudioManager.Instance.PlayTokenHop();
+
             float elapsed = 0f;
             while (elapsed < hopDuration)
             {

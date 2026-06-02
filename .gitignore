@@ -47,3 +47,5 @@ crashlytics-build.properties
 Assets/AssetStoreTools*
 
 # Auto-generated meta files for ignored dirs are fine
+UMMonopoly/Assets/Editor/
+UMMonopoly/Assets/Editor.meta

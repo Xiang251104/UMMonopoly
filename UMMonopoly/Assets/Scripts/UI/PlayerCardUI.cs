@@ -48,7 +48,7 @@ namespace UMMonopoly.UI
             if (moneyLabel != null) moneyLabel.text = $"RM {_player.Money}";
             if (propertyCountLabel != null)
             {
-                int n = _player.OwnedProperties.Count;
+                int n = _player.TotalOwnedCount;   // properties + stations + utilities
                 propertyCountLabel.text = n == 1 ? "1 Property" : $"{n} Properties";
             }
             if (cardCountLabel != null)

@@ -6,10 +6,39 @@ using UMMonopoly.Core;
 
 namespace UMMonopoly.UI
 {
+    /// <summary>
+    /// Drives the two-page main menu:
+    ///   Page 1 — title + Play + Quit (will hold the AI background image)
+    ///   Page 2 — player name entry + Back + Start Game
+    /// </summary>
     public class MainMenuController : MonoBehaviour
     {
+        [Header("Pages")]
+        public GameObject page1Panel;
+        public GameObject page2Panel;
+
+        [Header("Page 2 — Player Inputs")]
         public TMP_InputField[] playerNameInputs = new TMP_InputField[4];
+
+        [Header("Scene to load on Start")]
         public string gameSceneName = "GameBoard";
+
+        private void Start()
+        {
+            ShowPage1();
+        }
+
+        public void ShowPage1()
+        {
+            if (page1Panel != null) page1Panel.SetActive(true);
+            if (page2Panel != null) page2Panel.SetActive(false);
+        }
+
+        public void ShowPage2()
+        {
+            if (page1Panel != null) page1Panel.SetActive(false);
+            if (page2Panel != null) page2Panel.SetActive(true);
+        }
 
         public void StartNewGame()
         {

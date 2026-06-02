@@ -2,6 +2,7 @@ using System.Collections;
 using System.Text;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UMMonopoly.Core;
 using UMMonopoly.Data;
@@ -48,7 +49,7 @@ namespace UMMonopoly.UI
                 // Active VLG items after hiding rows: TileNameLabel(34) + Divider(1.5) + this label
                 // Spacing(12) + Padding(16) = 28px fixed overhead → safe max ≈ 165px
                 var le = descriptionLabel.GetComponent<LayoutElement>();
-                if (le != null) { le.preferredHeight = 175f; le.minHeight = 80f; }
+                if (le != null) { le.preferredHeight = 260f; le.minHeight = 120f; }
 
                 var content = descriptionLabel.transform.parent;
                 var vlg = content != null ? content.GetComponent<VerticalLayoutGroup>() : null;
@@ -58,7 +59,7 @@ namespace UMMonopoly.UI
                 // VLG with childControlHeight=false positions children by LayoutElement.preferredHeight
                 // but never resizes their RectTransforms, so Divider keeps its 100 px default.
                 var descRT = descriptionLabel.GetComponent<RectTransform>();
-                if (descRT != null) descRT.sizeDelta = new Vector2(descRT.sizeDelta.x, 175f);
+                if (descRT != null) descRT.sizeDelta = new Vector2(descRT.sizeDelta.x, 260f);
 
                 if (content != null)
                 {
@@ -95,7 +96,9 @@ namespace UMMonopoly.UI
 
         // ── Public API ─────────────────────────────────────────────────────────
 
-        public void Show(TileDataSO tile)
+        public void Show(TileDataSO tile) => Show(tile, inspectOnly: false);
+
+        public void Show(TileDataSO tile, bool inspectOnly)
         {
             if (tile == null) { Debug.LogError("[TileLandingPopup] null tile."); return; }
 
@@ -148,16 +151,19 @@ namespace UMMonopoly.UI
             if (boardTile == null) { Debug.LogError($"[TileLandingPopup] GetTile({tile.position}) = null"); return; }
 
             SetBuyButton(false, false);
-            SetUpgradeButton(false);
+            SetUpgradeButton(false, false);
 
             if (boardTile is PropertyTile pt)
             {
                 SetLabel(descriptionLabel, BuildPropertyInfo(tile, pt, gm.Board));
 
                 bool canBuy     = pt.Owner == null && gm.CurrentPlayer.Money >= tile.purchasePrice;
-                bool canUpgrade = pt.Owner == gm.CurrentPlayer && pt.CanUpgrade(gm.Board);
+                bool isOwnedByCurrent = pt.Owner == gm.CurrentPlayer;
+                bool canUpgrade = isOwnedByCurrent && pt.CanUpgrade(gm.Board);
                 SetBuyButton(pt.Owner == null, canBuy);
-                SetUpgradeButton(canUpgrade);
+                // Show the Upgrade button whenever the current player owns this tile;
+                // disable (gray out) when CanUpgrade returns false (e.g. no full colour set).
+                SetUpgradeButton(visible: isOwnedByCurrent, interactable: canUpgrade);
             }
             else if (boardTile is StationTile st)
             {
@@ -192,7 +198,48 @@ namespace UMMonopoly.UI
                 SetLabel(descriptionLabel, "");
             }
 
+            // Inspect-only: hide Buy/Upgrade so the popup is purely informational.
+            // (Player can still see all rent/owner/description data, but no actions.)
+            if (inspectOnly)
+            {
+                SetBuyButton(false, false);
+                SetUpgradeButton(false, false);
+            }
+
             if (canvasGroup != null) StartCoroutine(FadeIn());
+        }
+
+        private void Update()
+        {
+            if (!Input.GetMouseButtonDown(0)) return;
+
+            // Don't intercept clicks that land on UI (the popup itself, buttons, etc.)
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()) return;
+
+            var cam = Camera.main;
+            if (cam == null) return;
+
+            var ray = cam.ScreenPointToRay(Input.mousePosition);
+            if (!Physics.Raycast(ray, out RaycastHit hit, 100f)) return;
+
+            // Walk up the hit transform until we find the tile anchor (direct child of the Board).
+            var boardRoot = GameObject.Find("Board");
+            if (boardRoot == null) return;
+            var t = hit.collider != null ? hit.collider.transform : null;
+            while (t != null && t.parent != boardRoot.transform) t = t.parent;
+            if (t == null) return;
+
+            int position = t.GetSiblingIndex();
+            var gm = GameManager.Instance;
+            if (gm == null || gm.Board == null) return;
+
+            var boardTile = gm.Board.GetTile(position);
+            if (boardTile == null || boardTile.Data == null) return;
+
+            // If the player is standing on this exact tile, treat the click like a landing
+            // (so they can Buy/Upgrade their current tile). Otherwise pure inspect mode.
+            bool atCurrentTile = position == gm.CurrentPlayer.BoardPosition;
+            Show(boardTile.Data, inspectOnly: !atCurrentTile);
         }
 
         public void Hide()
@@ -232,9 +279,11 @@ namespace UMMonopoly.UI
             buyButton.interactable = interactable;
         }
 
-        private void SetUpgradeButton(bool visible)
+        private void SetUpgradeButton(bool visible, bool interactable)
         {
-            if (upgradeButton != null) upgradeButton.gameObject.SetActive(visible);
+            if (upgradeButton == null) return;
+            upgradeButton.gameObject.SetActive(visible);
+            upgradeButton.interactable = interactable;
         }
 
         // ── Fade ───────────────────────────────────────────────────────────────
@@ -263,6 +312,8 @@ namespace UMMonopoly.UI
                 sb.AppendLine($"Owner: {pt.Owner.Name}");
                 if (pt.OwnsFullSet(board) && pt.UpgradeLevel == 0)
                     sb.AppendLine("(Full colour set — base rent doubled)");
+                else if (pt.Owner == GameManager.Instance.CurrentPlayer && !pt.OwnsFullSet(board))
+                    sb.AppendLine($"(Tip: own all {data.colorGroup} tiles for doubled base rent)");
             }
 
             // Price line
