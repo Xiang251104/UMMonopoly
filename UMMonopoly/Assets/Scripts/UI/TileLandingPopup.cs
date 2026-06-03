@@ -261,8 +261,14 @@ namespace UMMonopoly.UI
             if (_currentTile == null) return;
             var gm = GameManager.Instance;
             if (gm.Board.GetTile(_currentTile.position) is PropertyTile pt)
-                gm.TryUpgrade(pt);
-            Show(_currentTile);
+            {
+                bool upgraded = gm.TryUpgrade(pt);
+                if (upgraded)
+                {
+                    SetLabel(descriptionLabel, BuildPropertyInfo(_currentTile, pt, gm.Board));
+                    SetUpgradeButton(visible: true, interactable: false);
+                }
+            }
         }
 
         // ── Helpers ────────────────────────────────────────────────────────────
