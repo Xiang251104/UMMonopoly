@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UMMonopoly.Entities;
 using UMMonopoly.Systems;
 using UMMonopoly.UI;
 
@@ -14,8 +15,8 @@ namespace UMMonopoly.Core
     public class TurnController : MonoBehaviour
     {
         [Header("References")]
-        public DicePhysics diceA;
-        public DicePhysics diceB;
+        public DiceAnimator diceA;
+        public DiceAnimator diceB;
         public BoardView boardView;
 
         [Header("Pacing")]
@@ -52,6 +53,13 @@ namespace UMMonopoly.Core
             int resultA = 0, resultB = 0;
             bool doneA = false, doneB = false;
 
+            bool hasPhysicalDice = diceA != null && diceB != null;
+            if (hasPhysicalDice)
+            {
+                Vector3 mid = (diceA.transform.position + diceB.transform.position) * 0.5f;
+                EventBus.RaiseDiceRollStarted(mid);
+            }
+
             if (diceA != null) diceA.Roll(v => { resultA = v; doneA = true; });
             else { resultA = Random.Range(1, 7); doneA = true; }
 
@@ -62,13 +70,23 @@ namespace UMMonopoly.Core
             yield return new WaitUntil(() => doneA && doneB);
             yield return new WaitForSeconds(pauseAfterRoll);
 
+            if (hasPhysicalDice) EventBus.RaiseDiceRollEnded();
+
             // Override the GameManager's internal DiceRoller with the physical result
             gm.Dice.OverrideResult(resultA, resultB);
             int total = gm.RollAndMove();
 
-            // Wait for token to finish hopping
+            // Wait for token to finish hopping (5s timeout so game never locks up)
             if (boardView != null)
-                yield return new WaitUntil(() => !boardView.IsMoving);
+            {
+                float timeout = 5f;
+                float elapsed = 0f;
+                while (boardView.IsMoving && elapsed < timeout)
+                {
+                    elapsed += Time.deltaTime;
+                    yield return null;
+                }
+            }
 
             IsAnimating = false;
         }

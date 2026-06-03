@@ -82,6 +82,7 @@ namespace UMMonopoly.Core
                 {
                     SendCurrentPlayerToJail();
                     DoublesInARow = 0;
+                    SetState(GameState.DecisionPhase);   // allow End Turn after jail
                     return total;
                 }
             }
@@ -109,6 +110,7 @@ namespace UMMonopoly.Core
             tile.OnPlayerLanded(CurrentPlayer, Context);
             CheckBankruptcy(CurrentPlayer);
             SetState(GameState.DecisionPhase);
+            EventBus.RaiseTileResolved();   // lets HUD enable Buy button exactly here
         }
 
         public bool TryBuyCurrentTile()
@@ -128,7 +130,8 @@ namespace UMMonopoly.Core
 
             if (Dice.LastWasDoubles && DoublesInARow > 0 && !CurrentPlayer.InJail)
             {
-                SetState(GameState.RollPhase);  // same player rolls again
+                SetState(GameState.RollPhase);
+                EventBus.RaiseTurnStarted(CurrentPlayerIndex);  // re-enables Roll button for doubles bonus
                 return;
             }
 
@@ -188,6 +191,10 @@ namespace UMMonopoly.Core
                 CurrentPlayer.Move(Dice.LastTotal, config.boardSize, awardSalary: true, config.salaryOnGo);
                 EventBus.RaisePlayerMoved(CurrentPlayer, CurrentPlayer.BoardPosition);
                 ResolveCurrentTile();
+            }
+            else
+            {
+                SetState(GameState.DecisionPhase);   // still in jail, allow End Turn
             }
         }
 

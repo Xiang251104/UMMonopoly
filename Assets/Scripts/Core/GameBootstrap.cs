@@ -21,9 +21,9 @@ namespace UMMonopoly.Core
         {
             var names = PendingPlayerNames ?? new List<string> { "Player 1", "Player 2" };
 
-            if (gameManager == null) gameManager = FindObjectOfType<GameManager>();
-            if (hud == null) hud = FindObjectOfType<HUDController>();
-            if (boardView == null) boardView = FindObjectOfType<BoardView>();
+            if (gameManager == null) gameManager = FindFirstObjectByType<GameManager>();
+            if (hud == null) hud = FindFirstObjectByType<HUDController>();
+            if (boardView == null) boardView = FindFirstObjectByType<BoardView>();
 
             gameManager.StartGame(names);
             if (hud != null) hud.BuildPlayerCards(gameManager.Players);

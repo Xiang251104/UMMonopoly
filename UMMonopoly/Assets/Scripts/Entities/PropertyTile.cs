@@ -37,8 +37,9 @@ namespace UMMonopoly.Entities
 
         public bool CanUpgrade(Board board)
         {
+            // Owner can upgrade their property at any time (full set NOT required).
+            // Owning the full set still rewards the doubled-base-rent bonus at UpgradeLevel 0.
             return Owner != null
-                && OwnsFullSet(board)
                 && UpgradeLevel < 4
                 && Owner.Money >= Data.upgradeCost;
         }

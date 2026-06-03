@@ -9,6 +9,10 @@ namespace UMMonopoly.Entities
         public int Money { get; private set; }
         public int BoardPosition { get; private set; }
         public List<PropertyTile> OwnedProperties { get; } = new List<PropertyTile>();
+        public List<StationTile>  OwnedStations   { get; } = new List<StationTile>();
+        public List<UtilityTile>  OwnedUtilities  { get; } = new List<UtilityTile>();
+        /// <summary>Combined count of all owned tiles (properties + stations + utilities).</summary>
+        public int TotalOwnedCount => OwnedProperties.Count + OwnedStations.Count + OwnedUtilities.Count;
         public bool InJail { get; set; }
         public int JailTurnsRemaining { get; set; }
         public bool IsBankrupt { get; private set; }
@@ -28,15 +32,17 @@ namespace UMMonopoly.Entities
             if (awardSalary && newPos < BoardPosition && steps > 0)
             {
                 Receive(salary);
+                EventBus.RaisePassedGo(this, salary);
             }
             BoardPosition = newPos;
         }
 
         public void TeleportTo(int position, int boardSize, int salary)
         {
-            if (position < BoardPosition)
+            if (position < BoardPosition && salary > 0)
             {
                 Receive(salary);
+                EventBus.RaisePassedGo(this, salary);
             }
             BoardPosition = position;
         }
@@ -49,6 +55,7 @@ namespace UMMonopoly.Entities
                 return false;
             }
             Money -= amount;
+            EventBus.RaiseMoneyChanged(this, -amount);
             return true;
         }
 
@@ -56,6 +63,7 @@ namespace UMMonopoly.Entities
         {
             if (amount <= 0) return;
             Money += amount;
+            EventBus.RaiseMoneyChanged(this, amount);
         }
 
         public int LiquidationValue()
@@ -79,6 +87,10 @@ namespace UMMonopoly.Entities
                 p.UpgradeLevel = 0;
             }
             OwnedProperties.Clear();
+            foreach (var s in OwnedStations)  s.Owner = null;
+            foreach (var u in OwnedUtilities) u.Owner = null;
+            OwnedStations.Clear();
+            OwnedUtilities.Clear();
         }
     }
 }

@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d96ea10b1b576c240a748ee73b793985, type: 3}
+  m_Name: MainGameConfig
+  m_EditorClassIdentifier: Assembly-CSharp::UMMonopoly.Data.GameConfigSO
+  startingMoney: 2000
+  salaryOnGo: 200
+  jailFine: 50
+  maxJailTurns: 3
+  jailTilePosition: 10
+  goToJailTilePosition: 30
+  targetWinScore: 0
+  boardSize: 40
+  diceCount: 2
+  diceSides: 6
+  maxDoublesBeforeJail: 3
+  tiles:
+  - {fileID: 11400000, guid: de07906a114408d4698f6563483c9a28, type: 2}
+  - {fileID: 11400000, guid: 943ab6d01464894408c3bc48a98f3d47, type: 2}
+  - {fileID: 11400000, guid: 7190692881a9efb4db55af05f4573476, type: 2}
+  - {fileID: 11400000, guid: 9633ac1f72850e1438ba9764fec09410, type: 2}
+  - {fileID: 11400000, guid: 62afc891940dd1a429f3f5b4a475fadc, type: 2}
+  - {fileID: 11400000, guid: 382016c272dfd784180bdc7c0ca12ea1, type: 2}
+  - {fileID: 11400000, guid: beb4956aeed86614d90bb983d6f84703, type: 2}
+  - {fileID: 11400000, guid: 3fde8c1a4a22879438d65d38a4e19747, type: 2}
+  - {fileID: 11400000, guid: 6a025418fb954ec4285a0b018330c9ad, type: 2}
+  - {fileID: 11400000, guid: c28b8f8bceea42945a20c457b8569b5f, type: 2}
+  - {fileID: 11400000, guid: 5eee3124527818f42ac757737f37b2ea, type: 2}
+  - {fileID: 11400000, guid: 6632f2e392472c54b9626b621dc5cf3b, type: 2}
+  - {fileID: 11400000, guid: a936b6058e65c154590c08cb822642a5, type: 2}
+  - {fileID: 11400000, guid: 4eef93a5f4d15974ea2813b7a5eb17ef, type: 2}
+  - {fileID: 11400000, guid: 965a65e552c2acd43a04f45aa518fd8f, type: 2}
+  - {fileID: 11400000, guid: 9fcda562de308724d8ebdb2d4ef25eb7, type: 2}
+  - {fileID: 11400000, guid: 22cf8b81bd2820445805515e21314cf9, type: 2}
+  - {fileID: 11400000, guid: 7c43fc2e83660524fa3844d118ec483a, type: 2}
+  - {fileID: 11400000, guid: 8d42dd91363f95d408a46fa4640ce4cc, type: 2}
+  - {fileID: 11400000, guid: 52806f1231241184cae12e3eb7e9ff57, type: 2}
+  - {fileID: 11400000, guid: a6ad397798fa0d94d86981fa1193eb65, type: 2}
+  - {fileID: 11400000, guid: f812d0264e12f7346a0347c63867799f, type: 2}
+  - {fileID: 11400000, guid: 59300aae9c2f475428811ca1647077e4, type: 2}
+  - {fileID: 11400000, guid: 532a9c2ea2d9eed48849395b0609f059, type: 2}
+  - {fileID: 11400000, guid: 3fbb8d7f024b67e4f8bda34f361b3a9f, type: 2}
+  - {fileID: 11400000, guid: 9adf6cd04f9c24f4d9c0f2828c4b2a27, type: 2}
+  - {fileID: 11400000, guid: ffe41d7b04ee7b341bf4a3c50a580781, type: 2}
+  - {fileID: 11400000, guid: ae1a6a112a91c304ebeee4beb5ac8b57, type: 2}
+  - {fileID: 11400000, guid: 98377352a081a6f47b0cb99b77105aac, type: 2}
+  - {fileID: 11400000, guid: 1fe3e70df01ce2245ab441a84b629cff, type: 2}
+  - {fileID: 11400000, guid: 1e0b32d3f79d63f4e9c97423da71ee5b, type: 2}
+  - {fileID: 11400000, guid: 43c500b647da0424899307e28f68e7e8, type: 2}
+  - {fileID: 11400000, guid: 5a253927cc9a7ac4f851d34159cd63b4, type: 2}
+  - {fileID: 11400000, guid: 33ad34bbe811b8948b7d2119953b5054, type: 2}
+  - {fileID: 11400000, guid: 36cff890c7aefdb4bbb2cde8f221d942, type: 2}
+  - {fileID: 11400000, guid: 8e8d8a623fba01f4aac349696f0bfc1c, type: 2}
+  - {fileID: 11400000, guid: a713272851b84444a9cc81fd08e719de, type: 2}
+  - {fileID: 11400000, guid: 7e713959b6dd6bb44856bef96b5bc259, type: 2}
+  - {fileID: 11400000, guid: ea9d49e9855511142a76a16ce9a5ebd6, type: 2}
+  - {fileID: 11400000, guid: 6bf47694d89a6224a9565a64a7f9e631, type: 2}
+  akademikDeck:
+  - {fileID: 11400000, guid: ce25a3671c21bb14d953793fb4778f7d, type: 2}
+  - {fileID: 11400000, guid: 5091d978181c9c04da763f110d7fe9ae, type: 2}
+  - {fileID: 11400000, guid: fdda254dd9a247140a6eda1ad9c96f1d, type: 2}
+  - {fileID: 11400000, guid: 538f00d6472a07040a5ae664e08640a1, type: 2}
+  - {fileID: 11400000, guid: 6b3ad3f5dc64fa24b90e0b358b4e4b12, type: 2}
+  - {fileID: 11400000, guid: 2715b95a8e8add241867daa18eed204a, type: 2}
+  - {fileID: 11400000, guid: 69201e701bf8c45428aa94c002e9d946, type: 2}
+  - {fileID: 11400000, guid: 1f5b9a6e0a0342b4d93503e6eac78a6a, type: 2}
+  - {fileID: 11400000, guid: 0c4370b30a40dd1438acc5e8aec03d21, type: 2}
+  - {fileID: 11400000, guid: 4d246e9192f87194d954c0236d8070f3, type: 2}
+  kampusDeck:
+  - {fileID: 11400000, guid: 464c20778921cee4992df81d7515a1aa, type: 2}
+  - {fileID: 11400000, guid: 7b609b1ae177fab40b3182b1a2cbff4e, type: 2}
+  - {fileID: 11400000, guid: 9487340f67ec5064885f6910f7719a66, type: 2}
+  - {fileID: 11400000, guid: fdfd188b8b9a7e04cbe1c4782f339693, type: 2}
+  - {fileID: 11400000, guid: 8041d675592625c42b28eb6349f62729, type: 2}
+  - {fileID: 11400000, guid: 8ef70beafcf47e249ba6f1717161beb5, type: 2}
+  - {fileID: 11400000, guid: 90c90f8dd8be8f9479ddc76f6477cf24, type: 2}
+  - {fileID: 11400000, guid: 763fe647a6e5a4b4d959fbc199f5dcb8, type: 2}
+  - {fileID: 11400000, guid: 193fa81a4f7005b4bbce29709b2f2170, type: 2}
+  - {fileID: 11400000, guid: 4e57777694012024a8b887eef23155aa, type: 2}
